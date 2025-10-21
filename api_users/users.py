@@ -22,7 +22,7 @@ def users():
 @app.get("/users/{id_user}")
 def get_user(id_user:int):
     users = [user for user in users_list if user.id == id_user]
-
+    
     if(len(users))!=0:
         return users[0]
     else:

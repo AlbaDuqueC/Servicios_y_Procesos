@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -24,6 +24,24 @@ def medicos():
 def get_medico(id_medico:int):
     medicos = [medico for medico in medicos_list if medico.id == id_medico]
 
+    if not medicos:
+        #Si da el error 404 (no se encontro en la lista), devolvera un comentario
+        raise HTTPException (status_code=404, detail= "User not found")
+    
+    return medicos[0]
+
+@app.get("/medicos/")
+def get_medico(id:int):
+    return search_medico(id)
+
+def search_medico(id:int):
+
+    # Buscamos usuario por id en la lista
+    # Devuelve una lista vacia si no encuentra nda 
+    # Decuelve una lista con el usuario encontrado
+    medicos=[medico for medico in medicos_list if medico.id==id]
+
+    # Devolvemos 
     if(len(medicos))!=0:
         return medicos[0]
     else:
