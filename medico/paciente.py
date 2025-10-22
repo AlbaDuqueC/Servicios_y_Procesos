@@ -1,0 +1,83 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+
+app= FastAPI()
+
+class Paciente(BaseModel):
+    id: int
+    dni: str
+    apellidos: str
+    nombre: str
+    segSocial: str
+    fNacimiento: str
+    idMedico: int
+
+paciente_list = [
+
+    Paciente(id=1, dni="123456789M", apellidos="Duque Crespo", nombre="Alba", segSocial="Adesla", fNacimiento="31-12-2005", idMedico=1),
+    Paciente(id=2, dni="987654321V", apellidos="Duque Dominguez", nombre="Manuel", segSocial="Adesla", fNacimiento="12-05-1971", idMedico=2),
+    Paciente(id=3, dni="123456789M", apellidos="Duque Crespo", nombre="Elena", segSocial="Adesla", fNacimiento="25-08-1999", idMedico=3),
+    Paciente(id=4, dni="123456789M", apellidos="Perez Diaz", nombre="Jose", segSocial="Susanidad", fNacimiento="04-04-2004", idMedico=4),
+    Paciente(id=5, dni="123456789M", apellidos="Carretero Rodriguez", nombre="Luis", segSocial="Salud", fNacimiento="03-03-2003", idMedico=5)
+]
+
+# Devuelve una lista de todos los pacientes
+@app.get("/pacientes")
+def pacientes():
+    return paciente_list
+
+# Busca un usuario de la lista de pacientes por el id introducido
+@app.get("/pacientes/{id_paciente}")
+def get_paciente(id_paciente:int):
+    pacientes = [paciente for paciente in paciente_list if paciente.id == id_paciente]
+
+    if not pacientes:
+
+        #Si da el error 404 (no se encontro en la lista), devolvera un comentario
+        raise HTTPException (status_code=404, detail="User not found")
+    
+    return pacientes[0]
+
+# Devuelve el paciente del id introducido 
+@app.get("/pacientes/")
+def get_paciente(id:int):
+    return search_paciente(id)
+
+# El status_code lo que hace es cambiar el codigo de estado por el numnero introducido 
+@app.post("/pacientes", status_code=201, response_class=Paciente)
+def add_paciente(paciente: Paciente):
+
+    #calculamo nuevo id y lo modificamos al usuario añadido
+    paciente.id=next_id
+
+    # Añadimos el usuario a nuestra lista
+    paciente_list.append(paciente)
+
+    #La respuesta de nuestro metodo es el propio usuario añadido
+    return paciente
+
+
+
+
+#FUNCIONES 
+
+def search_paciente(id:int):
+
+    # Buscamos paciente por id en la lista
+    # Devuelve una lista vacia si no encuentra nda 
+    # Decuelve una lista con el paciente encontrado
+    pacientes=[paciente for paciente in paciente_list if paciente.id==id]
+
+    # Devuelve un error si no existe el paciente
+    if(len(pacientes))!=0:
+        return pacientes[0]
+    else:
+        return{"error" : "No user found"}
+    
+
+#Devuelve el siguiente id que sera insertado si agregamos otro usuario
+#El id es el ultimo id del ultimo usuario introducido y a este sse le sumara 1
+def next_id():
+    #NO FUNCIONA, INTRODUCE UN NUMERO MENOS AL QUE DEBERIA INTRODUCIR
+    return (max(paciente_list, key=id).id + 1)
