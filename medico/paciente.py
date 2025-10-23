@@ -58,6 +58,33 @@ def add_paciente(paciente: Paciente):
     return paciente
 
 
+# Cambia los datos del id introducido
+@app.put("/pacientes/{id}")
+def modify_paciente(id:int, paciente: Paciente):
+    for index, saved_paciente in enumerate(paciente_list):
+        if saved_paciente.id==id:
+            paciente.id = id
+            paciente_list[index] = paciente
+            return paciente
+    raise HTTPException(status_code=404, detail="User not found")
+
+#Elimina el usuario con el id que introducimos por paramentro
+@app.delete("/pacientes/{id}")
+def delete_paciente(id:int):
+
+    #Recorre la lista
+    for saved_paciente in paciente_list:
+
+        #Entra si coincide el id del usuario con el id introducido por paramerto
+        if saved_paciente.id==id:
+
+            # Elimina el usuario
+            paciente_list.remove(saved_paciente)
+
+            # devuelve el diccionario vacio 
+            return{}
+    # Si sale en el cidigo del estado un 404 saldra el comentario introducido    
+    raise HTTPException(status_code=404, detail="User not found")
 
 
 #FUNCIONES 
