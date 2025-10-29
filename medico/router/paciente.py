@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter,FastAPI, HTTPException
 from pydantic import BaseModel
 
 
-app= FastAPI()
+router= APIRouter(prefix="/pacientes", tags=["pacientes"])
 
 class Paciente(BaseModel):
     id: int
@@ -23,12 +23,12 @@ paciente_list = [
 ]
 
 # Devuelve una lista de todos los pacientes
-@app.get("/pacientes")
+@router.get("/")
 def pacientes():
     return paciente_list
 
 # Busca un usuario de la lista de pacientes por el id introducido
-@app.get("/pacientes/{id_paciente}")
+@router.get("/{id_paciente}")
 def get_paciente(id_paciente:int):
     pacientes = [paciente for paciente in paciente_list if paciente.id == id_paciente]
 
@@ -40,12 +40,12 @@ def get_paciente(id_paciente:int):
     return pacientes[0]
 
 # Devuelve el paciente del id introducido 
-@app.get("/pacientes/")
+@router.get("/query/")
 def get_paciente(id:int):
     return search_paciente(id)
 
 # El status_code lo que hace es cambiar el codigo de estado por el numnero introducido 
-@app.post("/pacientes", status_code=201, response_class=Paciente)
+@router.post("/", status_code=201, response_class=Paciente)
 def add_paciente(paciente: Paciente):
 
     #calculamo nuevo id y lo modificamos al usuario añadido
@@ -59,7 +59,7 @@ def add_paciente(paciente: Paciente):
 
 
 # Cambia los datos del id introducido
-@app.put("/pacientes/{id}")
+@router.put("/{id}")
 def modify_paciente(id:int, paciente: Paciente):
     for index, saved_paciente in enumerate(paciente_list):
         if saved_paciente.id==id:
@@ -69,7 +69,7 @@ def modify_paciente(id:int, paciente: Paciente):
     raise HTTPException(status_code=404, detail="User not found")
 
 #Elimina el usuario con el id que introducimos por paramentro
-@app.delete("/pacientes/{id}")
+@router.delete("/{id}")
 def delete_paciente(id:int):
 
     #Recorre la lista

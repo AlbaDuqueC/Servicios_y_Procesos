@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter,FastAPI, HTTPException
 from pydantic import BaseModel
 
-app = FastAPI()
+router = APIRouter(prefix="/medicos", tags=["medicos"])
 
 class Medico(BaseModel):
     id: int
@@ -21,11 +21,11 @@ medicos_list = [
 
 ]   
 
-@app.get("/medicos")
+@router.get("/")
 def medicos():
     return medicos_list
 
-@app.get("/medicos/{id_medico}")
+@router.get("/{id_medico}")
 def get_medico(id_medico:int):
     medicos = [medico for medico in medicos_list if medico.id == id_medico]
 
@@ -35,12 +35,12 @@ def get_medico(id_medico:int):
     
     return medicos[0]
 
-@app.get("/medicos/")
+@router.get("/query/")
 def get_medico(id:int):
     return search_medico(id)
 
 # El status_code lo que hace es cambiar el codigo de estado por el numnero introducido 
-@app.post("/medicos", status_code=201, response_model=Medico)
+@router.post("/", status_code=201, response_model=Medico)
 def add_medico(medico: Medico):
 
     #calculamo nuevo id y lo modificamos al usuario añadido
@@ -53,7 +53,7 @@ def add_medico(medico: Medico):
     return medico
 
 # Cambia los datos del id introducido
-@app.put("/medicos/{id}")
+@router.put("/{id}")
 def modify_medico(id:int, medico:Medico):
     for index, saved_medico in enumerate(medicos_list):
         if saved_medico.id==id:
@@ -63,7 +63,7 @@ def modify_medico(id:int, medico:Medico):
     raise HTTPException(status_code=404, detail="User not found")
 
 #Elimina el usuario con el id que introducimos por paramentro
-@app.delete("/medicos/{id}")
+@router.delete("/{id}")
 def delete_medico(id:int):
 
     #Recorre la lista
@@ -96,5 +96,10 @@ def search_medico(id:int):
 #Devuelve el siguiente id que sera insertado si agregamos otro usuario
 #El id es el ultimo id del ultimo usuario introducido y a este sse le sumara 1
 def next_id():
-    #NO FUNCIONA, INTRODUCE UN NUMERO MENOS AL QUE DEBERIA INTRODUCIR
-    return (max(medicos_list, key=id).id + 1)
+    max=0
+
+    for medico in medicos_list:
+        if medico.id >max:
+            max=medico.id
+    
+    return (max + 1)
