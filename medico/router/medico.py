@@ -1,5 +1,6 @@
-from fastapi import APIRouter,FastAPI, HTTPException
+from fastapi import APIRouter,FastAPI, HTTPException, Depends
 from pydantic import BaseModel
+from auth_users import authentication
 
 router = APIRouter(prefix="/medicos", tags=["medicos"])
 
@@ -41,7 +42,7 @@ def get_medico(id:int):
 
 # El status_code lo que hace es cambiar el codigo de estado por el numnero introducido 
 @router.post("/", status_code=201, response_model=Medico)
-def add_medico(medico: Medico):
+def add_medico(medico: Medico, authorized = Depends(authentication)):
 
     #calculamo nuevo id y lo modificamos al usuario añadido
     medico.id=next_id()
