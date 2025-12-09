@@ -2,7 +2,7 @@ from fastapi import APIRouter,FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from router.auth_users import authentication
 
-router = APIRouter(prefix="/medicos", tags=["medicos"])
+router = APIRouter(prefix="/medicobd"    , tags=["medicobd"])
 
 class Medico(BaseModel):
     id: int
