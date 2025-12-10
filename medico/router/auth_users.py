@@ -38,7 +38,7 @@ class User(BaseModel):
 class UserDB(User):
     password: str
 
-users_db = {
+fake_users_db = {
     "elenarg" : {
         "username" : "elenarg",
         "fullname" : "Elena Rivero",
@@ -52,23 +52,23 @@ users_db = {
 @router.post("/register", status_code=201)
 def register(usuario: UserDB):
 
-    if usuario.username not in users_db:
+    if usuario.username not in fake_users_db:
         hashed_password = password_hash.hash(usuario.password)
         usuario.password = hashed_password
-        users_db[usuario.username] = usuario.model_dump()
+        fake_users_db[usuario.username] = usuario.model_dump()
         return usuario
     raise HTTPException(status_code=409, detail="El usuario ya existe")
 
 @router.post("/login")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
-    user_db = users_db.get(form.username)
+    user_db = fake_users_db.get(form.username)
     if user_db:
         try:
             #si el suuario existe en la base de datos
             #comprobamos las passwords
             #obtiene un objeto que devuelve un diccionario con todos los valores del objeto
             #los ** sirven para crear este objeto
-            user = UserDB(**users_db[form.username])
+            user = UserDB(**fake_users_db[form.username])
             if password_hash.verify(form.password, user.password):
                 expire = datetime.now(timezone.utc)+timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
                 access_token = {"sub": user.username, "exp": expire}
@@ -91,7 +91,7 @@ async def authentication (token:str = Depends(oauth2)):
     except PyJWTError:
         raise HTTPException(status_code=401, detail="Credenciales de autenticación invalidas", headers={"WWW-Authenticate" : "Bearer"})
     
-    user= User(**users_db[username])
+    user= User(**fake_users_db[username])
 
     if user.disabled:
         raise HTTPException(status_code=400, detail="Usuario inactivo")
