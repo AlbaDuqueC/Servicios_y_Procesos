@@ -98,7 +98,7 @@ async def auth_user(token:str = Depends(oauth2)):
     return user
 
 
-@router.post("/register", status_code=201)
+@router.post("/registro", status_code=201)
 async def register_user(user: UserDB):
     print("entro en el registro")
     # Hay que hashear la contraseña
