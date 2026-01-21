@@ -1,13 +1,12 @@
-"""Realiza el ejercicio anterior pero esta vez va a haber otra función que 
-lea los números de un fichero. En el fichero habrá dos números por línea 
-separados por un espacio. En este caso, tienes que llevar a cabo una 
-comunicación entre los dos procesos utilizando colas (Queue), de forma que 
-la función que se encarga de leer los números los guarde en la cola, y la 
-función que realiza la suma, recibirá la cola y tomará de ahí los dos 
-números."""
 
 import multiprocessing
 import time
+
+"""En este caso, vuelve a realizar la comunicación entre procesos pero usando 
+tuberías (Pipe), de forma que la función que se encarga de leer los números del 
+fichero se los envíe (send) al proceso que los suma. El proceso que suma los 
+números tiene que recibir (recv) los dos números y realizar la suma entre ellos.
+"""
 
 # Función que suma todos los números entre a y b
 def sumar_rango(a, b):
@@ -22,8 +21,8 @@ def sumar_rango(a, b):
     # Retorna la suma
     return suma
 
-# Función que lee pares de números del fichero y los mete en la cola
-def leer_pares_queue(nombre_archivo, cola):
+# Función que lee pares del fichero y los envía por el pipe
+def leer_pares_pipe(nombre_archivo, conn):
     try:
         # Abre el fichero en modo lectura
         with open(nombre_archivo, 'r') as f:
@@ -33,26 +32,29 @@ def leer_pares_queue(nombre_archivo, cola):
                 numeros = linea.strip().split()
                 # Si hay exactamente 2 números
                 if len(numeros) == 2:
-                    # Crea tupla con los dos números convertidos a enteros
+                    # Crea tupla con los dos números
                     par = (int(numeros[0]), int(numeros[1]))
-                    # Mete la tupla en la cola
-                    cola.put(par)
-        # Mete None para indicar fin
-        cola.put(None)
+                    # Envía la tupla por el pipe
+                    conn.send(par)
+        # Envía None para indicar fin
+        conn.send(None)
         print(f"Lectura de pares completada de {nombre_archivo}")
     except FileNotFoundError:
         print(f"Archivo {nombre_archivo} no encontrado")
-        # Mete None aunque haya error
-        cola.put(None)
+        # Envía None aunque haya error
+        conn.send(None)
+    finally:
+        # Cierra la conexión del pipe
+        conn.close()
 
-# Función que lee pares de la cola y suma los rangos
-def sumar_pares_queue(cola):
+# Función que recibe pares del pipe y suma los rangos
+def sumar_pares_pipe(conn):
     suma_total = 0
     contador = 0
     # Bucle infinito hasta recibir None
     while True:
-        # Obtiene un par de la cola
-        par = cola.get()
+        # Recibe un par del pipe
+        par = conn.recv()
         # Si recibe None, termina
         if par is None:
             break
@@ -62,26 +64,28 @@ def sumar_pares_queue(cola):
         resultado = sumar_rango(inicio, fin)
         # Acumula el resultado
         suma_total += resultado
-        # Incrementa contador de rangos procesados
+        # Incrementa contador
         contador += 1
     # Imprime resumen
     print(f"Total de {contador} rangos procesados. Suma acumulada: {suma_total}")
+    # Cierra la conexión del pipe
+    conn.close()
     return suma_total
 
 # Función principal del ejercicio
-def ejercicio_7():
-    print("\n=== EJERCICIO 7: Pares de números con Queue ===")
+def ejercicio_8():
+    print("\n=== EJERCICIO 8: Pares de números con Pipe ===")
     # Crea archivo de ejemplo con pares de números
     with open('num.txt', 'w') as f:
         f.write("1 100\n50 150\n200 300\n400 500\n")
     # Marca tiempo de inicio
     inicio = time.time()
-    # Crea una cola para comunicación
-    cola = multiprocessing.Queue()
-    # Crea proceso que lee el fichero y mete en la cola
-    p_lector = multiprocessing.Process(target=leer_pares_queue, args=('num.txt', cola))
-    # Crea proceso que lee de la cola y suma
-    p_sumador = multiprocessing.Process(target=sumar_pares_queue, args=(cola,))
+    # Crea un pipe (dos extremos de comunicación)
+    conn_recv, conn_send = multiprocessing.Pipe()
+    # Crea proceso que lee fichero y envía por conn_send
+    p_lector = multiprocessing.Process(target=leer_pares_pipe, args=('num.txt', conn_send))
+    # Crea proceso que recibe por conn_recv y suma
+    p_sumador = multiprocessing.Process(target=sumar_pares_pipe, args=(conn_recv,))
     # Inicia proceso lector
     p_lector.start()
     # Inicia proceso sumador
@@ -93,8 +97,8 @@ def ejercicio_7():
     # Marca tiempo de fin
     fin = time.time()
     # Calcula y muestra el tiempo transcurrido
-    print(f"Tiempo con Queue: {fin - inicio:.4f} segundos\n")
+    print(f"Tiempo con Pipe: {fin - inicio:.4f} segundos\n")
 
 # Protección para multiprocessing
 if __name__ == "__main__":
-    ejercicio_7()
+    ejercicio_8()
